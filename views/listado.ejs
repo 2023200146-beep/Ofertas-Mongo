@@ -1,0 +1,137 @@
+<%- include('partials/header', { title: title }) %>
+<%- include('partials/navbar') %>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-list-check"></i> Listado Completo de Ofertas</h1>
+        <div class="btn-group">
+            <a href="/crud" class="btn btn-outline-primary">
+                <i class="bi bi-gear"></i> Gestión CRUD
+            </a>
+            <a href="/" class="btn btn-outline-secondary">
+                <i class="bi bi-house"></i> Inicio
+            </a>
+        </div>
+    </div>
+
+    <!-- Buscador -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="/listado" class="row g-3">
+                <div class="col-md-10">
+                    <input type="text" class="form-control" name="buscar" 
+                           placeholder="Buscar por puesto o empresa..." 
+                           value="<%= terminoBusqueda %>">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                </div>
+                <% if (terminoBusqueda) { %>
+                    <div class="col-12">
+                        <div class="alert alert-info mb-0">
+                            Resultados para: "<strong><%= terminoBusqueda %></strong>"
+                            <a href="/listado" class="float-end">Limpiar búsqueda</a>
+                        </div>
+                    </div>
+                <% } %>
+            </form>
+        </div>
+    </div>
+
+    <% if (ofertas.length > 0) { %>
+        <div class="row">
+            <% ofertas.forEach(oferta => { %>
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="bi bi-briefcase"></i> <%= oferta.Puesto %></h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <h6 class="text-primary">
+                                    <i class="bi bi-building"></i> <%= oferta.Empresa.RazonSoc %>
+                                </h6>
+                                <p class="text-muted mb-1">
+                                    <i class="bi bi-geo-alt"></i> <%= oferta.Empresa.Direccion %>, <%= oferta.Empresa.Distrito %>
+                                </p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <span class="badge bg-info me-1">
+                                    <i class="bi bi-clock-history"></i> <%= oferta.Experiencia %> años
+                                </span>
+                                <span class="badge bg-success">
+                                    <i class="bi bi-cash"></i> S/<%= oferta.PagoMensual %>
+                                </span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted">Formación:</small>
+                                <p class="mb-1"><%= oferta.Requisitos.Formacion %></p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted">Conocimientos:</small>
+                                <div class="d-flex flex-wrap gap-1 mt-1">
+                                    <% if (oferta.Requisitos.Conocimientos && Array.isArray(oferta.Requisitos.Conocimientos)) { %>
+                                        <% oferta.Requisitos.Conocimientos.slice(0, 3).forEach(conocimiento => { %>
+                                            <span class="badge bg-secondary"><%= conocimiento %></span>
+                                        <% }); %>
+                                        <% if (oferta.Requisitos.Conocimientos.length > 3) { %>
+                                            <span class="badge bg-light text-dark">+<%= oferta.Requisitos.Conocimientos.length - 3 %> más</span>
+                                        <% } %>
+                                    <% } %>
+                                </div>
+                            </div>
+                            
+                            <div class="text-end">
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar"></i> Vence: <%= oferta.FechaFinal %>
+                                </small>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-light">
+                            <div class="d-flex justify-content-between">
+                                <span class="badge bg-primary">#<%= oferta.NroId %></span>
+                                <div>
+                                    <a href="/crud/editar/<%= oferta.NroId %>" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+        
+        <div class="alert alert-success mt-3">
+            <i class="bi bi-check-circle"></i> Mostrando <strong><%= ofertas.length %></strong> ofertas
+        </div>
+    <% } else { %>
+        <div class="text-center py-5">
+            <i class="bi bi-search display-1 text-muted"></i>
+            <h3 class="mt-3">
+                <% if (terminoBusqueda) { %>
+                    No se encontraron ofertas para "<%= terminoBusqueda %>"
+                <% } else { %>
+                    No hay ofertas disponibles
+                <% } %>
+            </h3>
+            <p class="text-muted">
+                <% if (terminoBusqueda) { %>
+                    Intenta con otro término de búsqueda
+                <% } else { %>
+                    Crea la primera oferta de trabajo
+                <% } %>
+            </p>
+            <a href="/crud/nuevo" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Crear Nueva Oferta
+            </a>
+        </div>
+    <% } %>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,107 @@
+<%- include('partials/header', { title: title }) %>
+<%- include('partials/navbar') %>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-<%= modo === 'crear' ? 'plus-circle' : 'pencil' %>"></i>
+                        <%= modo === 'crear' ? 'Crear Nueva Oferta' : 'Editar Oferta #' + oferta.NroId %>
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="<%= modo === 'crear' ? '/crud/nuevo' : '/crud/editar/' + oferta.NroId %>">
+                        <% if (modo === 'editar') { %>
+                            <input type="hidden" name="_method" value="PUT">
+                        <% } %>
+
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label for="puesto" class="form-label">Puesto de Trabajo *</label>
+                                <input type="text" class="form-control" id="puesto" name="puesto" 
+                                       value="<%= oferta ? oferta.Puesto : '' %>" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="pago_mensual" class="form-label">Salario Mensual (S/) *</label>
+                                <input type="number" class="form-control" id="pago_mensual" name="pago_mensual" 
+                                       value="<%= oferta ? oferta.PagoMensual : '' %>" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="experiencia" class="form-label">Experiencia (años) *</label>
+                                <input type="number" class="form-control" id="experiencia" name="experiencia" 
+                                       value="<%= oferta ? oferta.Experiencia : '' %>" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="fecha_final" class="form-label">Fecha Final *</label>
+                                <input type="text" class="form-control" id="fecha_final" name="fecha_final" 
+                                       value="<%= oferta ? oferta.FechaFinal : '' %>" 
+                                       placeholder="DD/MM/YYYY" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="formacion" class="form-label">Formación Requerida *</label>
+                                <input type="text" class="form-control" id="formacion" name="formacion" 
+                                       value="<%= oferta && oferta.Requisitos ? oferta.Requisitos.Formacion : '' %>" required>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0"><i class="bi bi-building"></i> Datos de la Empresa</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="empresa_razon" class="form-label">Razón Social *</label>
+                                        <input type="text" class="form-control" id="empresa_razon" name="empresa_razon" 
+                                               value="<%= oferta && oferta.Empresa ? oferta.Empresa.RazonSoc : '' %>" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="empresa_distrito" class="form-label">Distrito *</label>
+                                        <input type="text" class="form-control" id="empresa_distrito" name="empresa_distrito" 
+                                               value="<%= oferta && oferta.Empresa ? oferta.Empresa.Distrito : '' %>" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="empresa_direccion" class="form-label">Dirección *</label>
+                                        <input type="text" class="form-control" id="empresa_direccion" name="empresa_direccion" 
+                                               value="<%= oferta && oferta.Empresa ? oferta.Empresa.Direccion : '' %>" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-4">
+                            <div class="card-header bg-warning text-dark">
+                                <h6 class="mb-0"><i class="bi bi-code-slash"></i> Conocimientos Técnicos</h6>
+                            </div>
+                            <div class="card-body">
+                                <label for="conocimientos" class="form-label">Conocimientos (separados por coma)</label>
+                                <textarea class="form-control" id="conocimientos" name="conocimientos" rows="3">
+                                    <%= oferta && oferta.Requisitos && oferta.Requisitos.Conocimientos ? 
+                                        oferta.Requisitos.Conocimientos.join(', ') : '' %>
+                                </textarea>
+                                <div class="form-text">Ejemplo: Java, JavaScript, MongoDB, React, Node.js</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="/crud" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Volver al Listado
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-<%= modo === 'crear' ? 'save' : 'check-circle' %>"></i>
+                                <%= modo === 'crear' ? 'Guardar Oferta' : 'Actualizar Oferta' %>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>
