@@ -1,0 +1,24 @@
+{
+  "name": "crud-ofertas-trabajo",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "CRUD de ofertas de trabajo con MongoDB y EJS",
+  "main": "src/App.js",
+  "scripts": {
+    "start": "node src/App.js",
+    "dev": "nodemon src/App.js --ext js,ejs --ignore public/"
+  },
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "express": "^4.22.1",
+    "express-session": "^1.18.2",
+    "method-override": "^3.0.0",
+    "mongodb": "^6.21.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
