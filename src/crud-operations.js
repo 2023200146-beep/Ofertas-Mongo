@@ -5,6 +5,7 @@ export async function crearOferta(datosOferta) {
     try {
         const collection = await obtenerColeccion();
         
+        // Obtener el último NroId
         const ultimaOferta = await collection.find().sort({ NroId: -1 }).limit(1).toArray();
         const nuevoNroId = ultimaOferta.length > 0 ? ultimaOferta[0].NroId + 1 : 1;
         
@@ -100,42 +101,114 @@ export async function eliminarOferta(nroId) {
     }
 }
 
-// 6. ESTADÍSTICAS
+
 export async function obtenerEstadisticas() {
     try {
         const collection = await obtenerColeccion();
-        const documentos = await collection.find().toArray();
         
-        if (documentos.length === 0) {
+        // Verificar si collection existe
+        if (!collection) {
+            console.error("No se pudo obtener la colección");
             return {
                 totalOfertas: 0,
                 salarioPromedio: 0,
-                empresasUnicas: 0,
-                ofertasPorExperiencia: {}
+                empresasUnicas: 0
             };
         }
         
-        const empresas = [...new Set(documentos.map(d => d.Empresa?.RazonSoc).filter(Boolean))];
-        const totalSalario = documentos.reduce((sum, d) => sum + (d.PagoMensual || 0), 0);
+        // Obtener documentos
+        const documentos = await collection.find().toArray();
         
-        const ofertasPorExperiencia = {};
-        documentos.forEach(oferta => {
-            const exp = oferta.Experiencia || 'Sin experiencia';
-            ofertasPorExperiencia[exp] = (ofertasPorExperiencia[exp] || 0) + 1;
-        });
+        if (!documentos || documentos.length === 0) {
+            return {
+                totalOfertas: 0,
+                salarioPromedio: 0,
+                empresasUnicas: 0
+            };
+        }
+        
+        // Calcular estadísticas
+        const empresas = [...new Set(documentos.map(d => 
+            d.Empresa && d.Empresa.RazonSoc ? d.Empresa.RazonSoc : "Sin empresa"
+        ))];
+        
+        const salariosValidos = documentos
+            .filter(d => d.PagoMensual && typeof d.PagoMensual === 'number')
+            .map(d => d.PagoMensual);
+        
+        const totalSalario = salariosValidos.reduce((sum, salario) => sum + salario, 0);
+        const salarioPromedio = salariosValidos.length > 0 
+            ? Math.round(totalSalario / salariosValidos.length) 
+            : 0;
         
         return {
             totalOfertas: documentos.length,
-            salarioPromedio: Math.round(totalSalario / documentos.length),
-            empresasUnicas: empresas.length,
-            ofertasPorExperiencia: ofertasPorExperiencia
+            salarioPromedio: salarioPromedio,
+            empresasUnicas: empresas.length
         };
         
     } catch (error) {
         console.error("Error obteniendo estadísticas:", error);
-        return {};
+        return {
+            totalOfertas: 0,
+            salarioPromedio: 0,
+            empresasUnicas: 0
+        };
     }
 }
+// busqueda
+export async function buscarOfertasAvanzada(filtros) {
+    try {
+        const collection = await obtenerColeccion();
+        const query = {};
+        
+        // Filtrar por formación
+        if (filtros.formacion) {
+            query['Requisitos.Formacion'] = { 
+                $regex: filtros.formacion, 
+                $options: 'i' 
+            };
+        }
+        
+        // Filtrar por conocimientos (búsqueda múltiple)
+        if (filtros.conocimientos && Array.isArray(filtros.conocimientos)) {
+            query['Requisitos.Conocimientos'] = {
+                $in: filtros.conocimientos.map(c => new RegExp(c, 'i'))
+            };
+        }
+        
+        // Filtrar por experiencia
+        if (filtros.exp_min !== undefined || filtros.exp_max !== undefined) {
+            query.Experiencia = {};
+            
+            if (filtros.exp_min !== undefined) {
+                query.Experiencia.$gte = parseInt(filtros.exp_min);
+            }
+            if (filtros.exp_max !== undefined) {
+                query.Experiencia.$lte = parseInt(filtros.exp_max);
+            }
+        }
+        
+        // Filtrar por salario
+        if (filtros.salario_min !== undefined || filtros.salario_max !== undefined) {
+            query.PagoMensual = {};
+            
+            if (filtros.salario_min !== undefined) {
+                query.PagoMensual.$gte = parseInt(filtros.salario_min);
+            }
+            if (filtros.salario_max !== undefined) {
+                query.PagoMensual.$lte = parseInt(filtros.salario_max);
+            }
+        }
+        
+        return await collection.find(query).sort({ NroId: 1 }).toArray();
+        
+    } catch (error) {
+        console.error("Error en búsqueda avanzada:", error);
+        return [];
+    }
+}
+
 
 // 7. BUSCAR OFERTAS
 export async function buscarOfertas(termino) {

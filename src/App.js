@@ -3,8 +3,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import methodOverride from 'method-override';
 import session from 'express-session';
-
-// Importar las funciones CRUD individualmente
 import { conectarBD } from './database.js';
 import { 
     crearOferta, 
@@ -16,17 +14,17 @@ import {
     buscarOfertas 
 } from './crud-operations.js';
 
-// Configurar __dirname para ES modules
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(methodOverride('_method'));
+app.use(methodOverride('_method'));  
 app.use(session({
     secret: 'secret-key-ofertas',
     resave: false,
@@ -34,14 +32,14 @@ app.use(session({
     cookie: { secure: false }
 }));
 
-// Configurar EJS
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
 
-// Archivos estáticos
+
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Middleware para pasar mensajes flash
+
 app.use((req, res, next) => {
     res.locals.success_msg = req.session.success_msg;
     res.locals.error_msg = req.session.error_msg;
@@ -50,7 +48,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// RUTAS
 
 // 1. Página principal
 app.get('/', async (req, res) => {
@@ -61,7 +58,7 @@ app.get('/', async (req, res) => {
         res.render('index', {
             title: 'Inicio - Sistema de Ofertas',
             estadisticas,
-            ultimasOfertas: ultimasOfertas.slice(0, 5) // Mostrar solo 5
+            ultimasOfertas: ultimasOfertas.slice(0, 5)
         });
     } catch (error) {
         console.error(error);
@@ -114,15 +111,15 @@ app.post('/crud/nuevo', async (req, res) => {
         const resultado = await crearOferta(datosOferta);
         
         if (resultado.success) {
-            req.session.success_msg = `Oferta creada exitosamente con ID: ${resultado.nroId}`;
+            req.session.success_msg = ` Oferta creada exitosamente con ID: ${resultado.nroId}`;
         } else {
-            req.session.error_msg = `Error: ${resultado.error}`;
+            req.session.error_msg = ` Error: ${resultado.error}`;
         }
         
         res.redirect('/crud');
     } catch (error) {
         console.error(error);
-        req.session.error_msg = 'Error al crear la oferta';
+        req.session.error_msg = ' Error al crear la oferta';
         res.redirect('/crud');
     }
 });
@@ -149,8 +146,8 @@ app.get('/crud/editar/:id', async (req, res) => {
     }
 });
 
-// 6. Actualizar oferta (PUT)
-app.put('/crud/editar/:id', async (req, res) => {
+// 6. Actualizar oferta 
+app.post('/crud/editar/:id', async (req, res) => {
     try {
         const nuevosDatos = {
             Empresa: {
@@ -179,13 +176,13 @@ app.put('/crud/editar/:id', async (req, res) => {
         res.redirect('/crud');
     } catch (error) {
         console.error(error);
-        req.session.error_msg = 'Error al actualizar la oferta';
+        req.session.error_msg = ' Error al actualizar la oferta';
         res.redirect('/crud');
     }
 });
 
-// 7. Eliminar oferta (DELETE)
-app.delete('/crud/eliminar/:id', async (req, res) => {
+// 7. Eliminar oferta 
+app.post('/crud/eliminar/:id', async (req, res) => {
     try {
         const resultado = await eliminarOferta(req.params.id);
         
@@ -198,33 +195,11 @@ app.delete('/crud/eliminar/:id', async (req, res) => {
         res.redirect('/crud');
     } catch (error) {
         console.error(error);
-        req.session.error_msg = 'Error al eliminar la oferta';
+        req.session.error_msg = '❌ Error al eliminar la oferta';
         res.redirect('/crud');
     }
 });
 
-// 8. Página de listado completo
-app.get('/listado', async (req, res) => {
-    try {
-        const { buscar } = req.query;
-        let ofertas;
-        
-        if (buscar) {
-            ofertas = await buscarOfertas(buscar);
-        } else {
-            ofertas = await leerTodasOfertas();
-        }
-        
-        res.render('listado', {
-            title: 'Listado de Ofertas',
-            ofertas,
-            terminoBusqueda: buscar || ''
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Error al cargar el listado');
-    }
-});
 
 // 9. API para obtener estadísticas (JSON)
 app.get('/api/estadisticas', async (req, res) => {
@@ -248,15 +223,120 @@ app.get('/api/ofertas', async (req, res) => {
     }
 });
 
+// Ruta 404
+
+
 // Iniciar servidor
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-    console.log(`📊 MongoDB: Conectado a Atlas`);
+    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`MongoDB: Conectado a Atlas`);
+});
+
+// Modificar la ruta /listado para soportar búsqueda avanzada
+app.get('/listado', async (req, res) => {
+    try {
+        console.log('Accediendo a /listado'); // Para debug
+        
+        const { 
+            formacion, 
+            conocimientos, 
+            exp_min, 
+            exp_max 
+        } = req.query;
+        
+        let ofertas = await leerTodasOfertas();
+        const totalOfertas = ofertas.length;
+        
+        console.log(`Total ofertas en BD: ${totalOfertas}`);
+        
+        // Aplicar filtros si existen
+        if (formacion) {
+            console.log(`Filtrando por formación: ${formacion}`);
+            const formacionBusqueda = formacion.toLowerCase().trim();
+            ofertas = ofertas.filter(oferta => {
+                const formacionOferta = oferta.Requisitos?.Formacion?.toLowerCase() || '';
+                return formacionOferta.includes(formacionBusqueda);
+            });
+        }
+        
+        if (conocimientos) {
+            console.log(`Filtrando por conocimientos: ${conocimientos}`);
+            const conocimientosArray = conocimientos.split(',').map(c => c.trim().toLowerCase()).filter(c => c);
+            if (conocimientosArray.length > 0) {
+                ofertas = ofertas.filter(oferta => {
+                    if (!oferta.Requisitos?.Conocimientos || !Array.isArray(oferta.Requisitos.Conocimientos)) {
+                        return false;
+                    }
+                    const ofertaConocimientos = oferta.Requisitos.Conocimientos.map(c => c.toLowerCase());
+                    
+                    return conocimientosArray.some(conocimiento => {
+                        return ofertaConocimientos.some(oc => oc.includes(conocimiento));
+                    });
+                });
+            }
+        }
+        
+        if (exp_min || exp_max) {
+            console.log(`Filtrando por experiencia: ${exp_min || '0'} - ${exp_max || '∞'}`);
+            const minExp = exp_min ? parseInt(exp_min) : 0;
+            const maxExp = exp_max ? parseInt(exp_max) : 999;
+            
+            // Validación A < B
+            if (exp_min && exp_max && minExp > maxExp) {
+                req.session.error_msg = 'Error: La experiencia mínima (A) debe ser menor que la experiencia máxima (B)';
+                return res.redirect('/listado');
+            }
+            
+            ofertas = ofertas.filter(oferta => {
+                const exp = oferta.Experiencia || 0;
+                
+                if (exp_min && exp_max) {
+                    return exp >= minExp && exp <= maxExp;
+                } else if (exp_min) {
+                    return exp >= minExp;
+                } else if (exp_max) {
+                    return exp <= maxExp;
+                }
+                return true;
+            });
+        }
+        
+        // Verificar si hay filtros activos
+        const hasFilters = !!(formacion || conocimientos || exp_min || exp_max);
+        
+        console.log(`Ofertas después de filtros: ${ofertas.length}`);
+        
+        res.render('listado', {
+            title: 'Listado de Ofertas',
+            ofertas,
+            totalOfertas,
+            busqueda: {
+                formacion: formacion || '',
+                conocimientos: conocimientos || '',
+                exp_min: exp_min || '',
+                exp_max: exp_max || ''
+            },
+            hasFilters
+        });
+        
+    } catch (error) {
+        console.error(' Error en /listado:', error);
+        req.session.error_msg = 'Error al cargar el listado';
+        res.redirect('/listado');
+    }
 });
 
 // Conectar a la base de datos al iniciar
 conectarBD().then(() => {
-    console.log('✅ Base de datos conectada');
+    console.log('Base de datos conectada');
 }).catch(err => {
-    console.error('❌ Error conectando a la base de datos:', err);
+    console.error('Error conectando a la base de datos:', err);
+});
+
+app.use((req, res) => {
+    res.status(404).send(`
+        <h1>404 - Página no encontrada</h1>
+        <p>La ruta <strong>${req.url}</strong> no existe.</p>
+        <a href="/">Volver al inicio</a>
+    `);
 });
