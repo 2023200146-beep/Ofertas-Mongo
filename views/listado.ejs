@@ -14,25 +14,95 @@
         </div>
     </div>
 
-    <!-- Buscador -->
+    <!-- Buscador con 4 campos específicos -->
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="/listado" class="row g-3">
-                <div class="col-md-10">
-                    <input type="text" class="form-control" name="buscar" 
-                           placeholder="Buscar por puesto o empresa..." 
-                           value="<%= terminoBusqueda %>">
+                
+                <!-- 1. Formación -->
+                <div class="col-md-6">
+                    <label for="formacion" class="form-label">
+                        <i class="bi bi-mortarboard"></i> Formación Requerida
+                    </label>
+                    <input type="text" class="form-control" id="formacion" name="formacion" 
+                           placeholder="Ej: Ingeniero de Sistemas" 
+                           value="<%= busqueda && busqueda.formacion ? busqueda.formacion : '' %>">
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-search"></i> Buscar
-                    </button>
+
+                <!-- 2. Conocimientos -->
+                <div class="col-md-6">
+                    <label for="conocimientos" class="form-label">
+                        <i class="bi bi-code-slash"></i> Conocimientos (separados por coma)
+                    </label>
+                    <input type="text" class="form-control" id="conocimientos" name="conocimientos" 
+                           placeholder="Ej: Java, Python, MySQL" 
+                           value="<%= busqueda && busqueda.conocimientos ? busqueda.conocimientos : '' %>">
                 </div>
-                <% if (terminoBusqueda) { %>
+
+                <!-- 3. Experiencia Mínima (A) -->
+                <div class="col-md-3">
+                    <label for="exp_min" class="form-label">
+                        <i class="bi bi-arrow-up-right"></i> Experiencia Mínima (A años)
+                    </label>
+                    <input type="number" class="form-control" id="exp_min" name="exp_min" 
+                           min="0" placeholder="0"
+                           value="<%= busqueda && busqueda.exp_min ? busqueda.exp_min : '' %>">
+                </div>
+
+                <!-- 4. Experiencia Máxima (B) -->
+                <div class="col-md-3">
+                    <label for="exp_max" class="form-label">
+                        <i class="bi bi-arrow-down-right"></i> Experiencia Máxima (B años)
+                    </label>
+                    <input type="number" class="form-control" id="exp_max" name="exp_max" 
+                           min="0" placeholder="10"
+                           value="<%= busqueda && busqueda.exp_max ? busqueda.exp_max : '' %>">
+                </div>
+
+                <!-- Botones -->
+                <div class="col-md-6">
+                    <div class="d-flex gap-2" style="margin-top: 32px;">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-search"></i> Buscar
+                        </button>
+                        <a href="/listado" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Limpiar
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Mostrar filtros activos -->
+                <% if (hasFilters) { %>
                     <div class="col-12">
-                        <div class="alert alert-info mb-0">
-                            Resultados para: "<strong><%= terminoBusqueda %></strong>"
-                            <a href="/listado" class="float-end">Limpiar búsqueda</a>
+                        <div class="alert alert-info mb-0 mt-3">
+                            <h6 class="mb-2"><i class="bi bi-funnel"></i> Filtros aplicados:</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <% if (busqueda.formacion) { %>
+                                    <span class="badge bg-primary">
+                                        Formación: <%= busqueda.formacion %>
+                                    </span>
+                                <% } %>
+                                <% if (busqueda.conocimientos) { %>
+                                    <span class="badge bg-success">
+                                        Conocimientos: <%= busqueda.conocimientos %>
+                                    </span>
+                                <% } %>
+                                <% if (busqueda.exp_min) { %>
+                                    <span class="badge bg-warning text-dark">
+                                        Exp. mínima: <%= busqueda.exp_min %> años
+                                    </span>
+                                <% } %>
+                                <% if (busqueda.exp_max) { %>
+                                    <span class="badge bg-warning text-dark">
+                                        Exp. máxima: <%= busqueda.exp_max %> años
+                                    </span>
+                                <% } %>
+                            </div>
+                            <div class="mt-2">
+                                <a href="/listado" class="btn btn-sm btn-light">
+                                    <i class="bi bi-x-lg"></i> Limpiar todos los filtros
+                                </a>
+                            </div>
                         </div>
                     </div>
                 <% } %>
@@ -40,7 +110,7 @@
         </div>
     </div>
 
-    <% if (ofertas.length > 0) { %>
+    <% if (ofertas && ofertas.length > 0) { %>
         <div class="row">
             <% ofertas.forEach(oferta => { %>
                 <div class="col-md-6 col-lg-4 mb-4">
@@ -109,20 +179,23 @@
         
         <div class="alert alert-success mt-3">
             <i class="bi bi-check-circle"></i> Mostrando <strong><%= ofertas.length %></strong> ofertas
+            <% if (hasFilters && totalOfertas) { %>
+                (de <%= totalOfertas %> totales)
+            <% } %>
         </div>
     <% } else { %>
         <div class="text-center py-5">
             <i class="bi bi-search display-1 text-muted"></i>
             <h3 class="mt-3">
-                <% if (terminoBusqueda) { %>
-                    No se encontraron ofertas para "<%= terminoBusqueda %>"
+                <% if (hasFilters) { %>
+                    No se encontraron ofertas con los filtros aplicados
                 <% } else { %>
                     No hay ofertas disponibles
                 <% } %>
             </h3>
             <p class="text-muted">
-                <% if (terminoBusqueda) { %>
-                    Intenta con otro término de búsqueda
+                <% if (hasFilters) { %>
+                    Intenta con otros criterios de búsqueda
                 <% } else { %>
                     Crea la primera oferta de trabajo
                 <% } %>
@@ -130,8 +203,39 @@
             <a href="/crud/nuevo" class="btn btn-primary">
                 <i class="bi bi-plus-circle"></i> Crear Nueva Oferta
             </a>
+            <% if (hasFilters) { %>
+                <a href="/listado" class="btn btn-outline-secondary ms-2">
+                    <i class="bi bi-x-circle"></i> Ver todas las ofertas
+                </a>
+            <% } %>
         </div>
     <% } %>
 </div>
+
+<script>
+// Validación: Asegurar que A < B
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const expMin = document.getElementById('exp_min');
+    const expMax = document.getElementById('exp_max');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (expMin.value && expMax.value) {
+                const min = parseInt(expMin.value);
+                const max = parseInt(expMax.value);
+                
+                if (min > max) {
+                    e.preventDefault();
+                    alert('Error: La experiencia mínima (A) debe ser menor que la experiencia máxima (B)');
+                    expMin.focus();
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
+});
+</script>
 
 <%- include('partials/footer') %>
